@@ -31,6 +31,7 @@ class PushNotification{
     required String recipientId,
     String? title,
     String type = "message",
+    String? callId,
 }) async {
     final accessToken = await getAccessToken();
     if (accessToken.isEmpty) {
@@ -42,29 +43,48 @@ class PushNotification{
     const String projectId = 'doctor-app-3f4bb';
     final String url = 'https://fcm.googleapis.com/v1/projects/$projectId/messages:send';
 
+    final messageBody = {
+      "message": {
+        "token": recipientToken,
+        "notification": {
+          "title": title ?? "New Message",
+          "body": message,
+        },
+        "data": {
+          "click_action": "FLUTTER_NOTIFICATION_CLICK",
+          "type": type,
+          "roomId": roomId,
+          "recipientId": recipientId,
+          "recipientName": recipientName,
+          "token": recipientToken,
+        },
+      },
+    };
+
+    final callBody = {
+      "message": {
+        "token": recipientToken,
+        "data": {
+          "click_action": "FLUTTER_NOTIFICATION_CLICK",
+          "type": type,
+          "roomId": roomId,
+          "callId": callId,
+          "recipientId": recipientId,
+          "recipientName": recipientName,
+          "token": recipientToken,
+        },
+      },
+    };
+
+    final bodyToSend = type == "message" ? messageBody : callBody;
+
     final response = await http.post(
       Uri.parse(url),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $accessToken',
       },
-      body: jsonEncode({
-        "message": {
-          "token": recipientToken,
-          "notification": {
-            "title": title ?? "New Message",
-            "body": message,
-          },
-          "data": {
-            "click_action": "FLUTTER_NOTIFICATION_CLICK",
-            "type": type,
-            "roomId": roomId,
-            "recipientId": recipientId,
-            "recipientName": recipientName,
-            "token": recipientToken,
-          },
-        },
-      }),
+      body: jsonEncode(bodyToSend),
     );
 
     if (response.statusCode == 200) {

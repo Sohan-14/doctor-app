@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:doctor_app/views/chat/call_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomeController extends GetxController {
   RxList<UserModel> users = <UserModel>[].obs;
@@ -9,6 +11,22 @@ class HomeController extends GetxController {
   void onInit() {
     super.onInit();
     fetchUsers();
+  }
+
+  Future<void> getStoredCallData() async {
+    final prefs = await SharedPreferences.getInstance();
+    final roomId = prefs.getString('call_room_id');
+    final callId = prefs.getString('call_call_id');
+
+    await prefs.remove('call_room_id');
+    await prefs.remove('call_call_id');
+
+    print("call_room_id $roomId");
+
+
+    if(roomId != null && callId != null){
+      Get.to(() => CallPage(roomId: roomId, callId: callId));
+    }
   }
 
   Future<void> fetchUsers() async {

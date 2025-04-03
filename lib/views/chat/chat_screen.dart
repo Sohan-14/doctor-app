@@ -41,11 +41,6 @@ class _ChatScreenState extends State<ChatScreen> {
           IconButton(
             onPressed: (){
               chatController.sendCall(widget.recipientToken);
-              Get.to(
-                CallPage(
-                 roomId: chatController.chatRoomId,
-                ),
-              );
             },
             icon: Icon(Icons.video_call, size: 32,),
           ),

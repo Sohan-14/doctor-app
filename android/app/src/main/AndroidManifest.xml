@@ -49,15 +49,7 @@
             </intent-filter>
         </activity>
 
-        <activity
-            android:name="com.hiennv.flutter_callkit_incoming.CallkitActivity"
-            android:exported="true"
-            android:theme="@style/Theme.AppCompat.DayNight.NoActionBar.FullScreen"
-            android:launchMode="singleTop"
-            android:showWhenLocked="true"
-            android:turnScreenOn="true"
-            tools:targetApi="o_mr1">
-        </activity>
+
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

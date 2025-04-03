@@ -2,6 +2,7 @@ import 'package:doctor_app/bindings/app_bindings.dart';
 import 'package:doctor_app/views/auth/signin_page.dart';
 import 'package:doctor_app/views/auth/signup_page.dart';
 import 'package:doctor_app/views/chat/call_page.dart';
+import 'package:doctor_app/views/chat/incoming_call_page.dart';
 import 'package:doctor_app/views/home_page.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -14,6 +15,7 @@ import 'package:flutter_callkit_incoming/flutter_callkit_incoming.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 
 @pragma('vm:entry-point')
@@ -31,7 +33,9 @@ Future<void> _backgroundMessageHandler(RemoteMessage message) async {
       textDecline: 'Decline',
       extra: {
         'roomId': message.data['roomId'],
+        'callId': message.data['callId'],
         'callerId': message.data['recipientId'],
+        'callerName': message.data['recipientName'],
       },
       missedCallNotification: NotificationParams(
         showNotification: true,
@@ -70,14 +74,13 @@ Future<void> _backgroundMessageHandler(RemoteMessage message) async {
       ),
     ));
   }
-  print("Handling background message id : ${message.messageId}");
-  print("Handling background message title : ${message.notification?.title}");
-
 }
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+
+
   FirebaseMessaging messaging = FirebaseMessaging.instance;
   await messaging.requestPermission(
     alert: true,
@@ -85,6 +88,7 @@ void main() async {
     sound: true,
   );
   FirebaseMessaging.onBackgroundMessage(_backgroundMessageHandler);
+
 
   const AndroidInitializationSettings androidInitializationSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
   const DarwinInitializationSettings iosInitSettings = DarwinInitializationSettings(
@@ -98,64 +102,73 @@ void main() async {
   );
   FlutterLocalNotificationsPlugin().initialize(initSettings);
 
-  FlutterCallkitIncoming.onEvent.listen((event) {
-    print("event of call event: $event");
-    switch (event?.event) {
-      case Event.actionCallAccept:
-        final roomId = event?.body['extra']['roomId'];
-        if (roomId != null) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            Get.toNamed('/home');
-            Get.to(() => CallPage(roomId: roomId));
-          });
-        }
-        print("Event.actionCallAccept");
-        break;
-      case Event.actionCallDecline:
-        print("Event.actionCallDecline");
-        break;
-      default:
-        print("Event:Ohters");
-    }
-  });
-
 
   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
     if (message.data['type'] == 'call') {
-      FlutterCallkitIncoming.showCallkitIncoming(CallKitParams(
-        id: message.messageId ?? DateTime.now().millisecondsSinceEpoch.toString(),
-        nameCaller: message.data['recipientName'],
-        appName: 'Doctor App',
-        handle: 'Video Call',
-        type: 2,
-        duration: 30000,
-        extra: {
-          'roomId': message.data['roomId'],
-          'callerId': message.data['callerId'],
-        },
-        android: AndroidParams(
-          isCustomNotification: false,
-          isShowFullLockedScreen: true,
-          backgroundColor: '#0955fa',
-          isImportant: true,
-          ringtonePath: 'system_ringtone_default',
-          incomingCallNotificationChannelName: "Incoming Call",
-          missedCallNotificationChannelName: "Missed Call",
-          isShowLogo: false,
+      print("callId : ${message.data['callId']}");
+      Get.to(() => IncomingCallPage(), arguments: {
+        "callerName": message.data['recipientName'],
+        "roomId": message.data['roomId'],
+        "callId": message.data['callId'],
+      });
+    }
+    else{
+      FlutterLocalNotificationsPlugin().show(
+        0,
+        message.notification?.title ?? 'New Notification',
+        message.notification?.body ?? 'You have a new message',
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'default_channel_id',
+            'Default Channel',
+            channelDescription: 'Channel for general notifications',
+            importance: Importance.max,
+            priority: Priority.high,
+            playSound: true,
+          ),
+          iOS: DarwinNotificationDetails(
+            presentSound: true,
+          ),
         ),
-        ios: IOSParams(
-          supportsVideo: true,
-          ringtonePath: 'system_ringtone_default',
-          audioSessionMode: 'default',
-          handleType: 'generic',
-
-        ),
-      ));
+      );
     }
   });
 
 
   runApp(MyApp());
+
+  FlutterCallkitIncoming.onEvent.listen((event) async {
+    switch (event?.event) {
+      case Event.actionCallAccept:
+        final roomId = event?.body['extra']['roomId'];
+        final callId = event?.body['extra']['callId'];
+        final callerName = event?.body['extra']['callerName'];
+
+        print("Accepted call: roomId = $roomId, callId = $callId");
+
+        if (roomId != null && callId != null) {
+          // Ensure Flutter is ready before navigating
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('call_room_id', roomId);
+          await prefs.setString('call_call_id', callId);
+
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            // Delay to let navigation stack initialize
+            Future.delayed(const Duration(milliseconds: 300), () {
+              if (Get.isRegistered<GetMaterialApp>()) {
+                Get.to(() => CallPage(roomId: roomId, callId: callId));
+              } else {
+                print("⚠️ App not ready for navigation yet");
+              }
+            });
+          });
+        }
+        break;
+
+      default:
+        print("Unhandled CallKit event: ${event?.event}");
+    }
+  });
 }
 
 class MyApp extends StatelessWidget {
