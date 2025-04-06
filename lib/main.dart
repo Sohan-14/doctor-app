@@ -144,24 +144,11 @@ void main() async {
         final callId = event?.body['extra']['callId'];
         final callerName = event?.body['extra']['callerName'];
 
-        print("Accepted call: roomId = $roomId, callId = $callId");
+        print("✅ Call accepted: roomId = $roomId, callId = $callId");
 
         if (roomId != null && callId != null) {
-          // Ensure Flutter is ready before navigating
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('call_room_id', roomId);
-          await prefs.setString('call_call_id', callId);
-
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            // Delay to let navigation stack initialize
-            Future.delayed(const Duration(milliseconds: 300), () {
-              if (Get.isRegistered<GetMaterialApp>()) {
-                Get.to(() => CallPage(roomId: roomId, callId: callId));
-              } else {
-                print("⚠️ App not ready for navigation yet");
-              }
-            });
-          });
+          // Retry navigation after app is fully resumed
+          _navigateToCallPageWhenReady(roomId, callId);
         }
         break;
 
@@ -169,7 +156,30 @@ void main() async {
         print("Unhandled CallKit event: ${event?.event}");
     }
   });
+
 }
+
+void _navigateToCallPageWhenReady(String roomId, String callId) async {
+  bool navigated = false;
+
+  for (int i = 0; i < 10; i++) {
+    await Future.delayed(Duration(milliseconds: 300));
+    if (Get.context != null) {
+      print("🚀 Navigating to CallPage");
+      Get.to(() => CallPage(roomId: roomId, callId: callId));
+      navigated = true;
+      break;
+    } else {
+      print("⏳ Waiting for context to be ready... ($i)");
+    }
+  }
+
+  if (!navigated) {
+    print("❌ Failed to navigate: context not ready after 3 seconds");
+  }
+}
+
+
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});

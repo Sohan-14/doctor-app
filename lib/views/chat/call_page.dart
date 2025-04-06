@@ -2,11 +2,12 @@ import 'dart:async';
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
 import 'package:doctor_app/controllers/chat_controller.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 const appId = "004e78b9715c4733b1541590b261c7a8";
-const token = "007eJxTYJi/eu5HrQPtW6fuPDTvSofZ3pa+vtk+CrER6el3NJ+828itwGBgYJJqbpFkaW5ommxibmycZGhqYmhqaZBkZGaYbJ5oYSv1Nr0hkJHhSNZNVkYGCATxeRkS0/OLEuPTckpLSlKLGBgAIBgkoQ==";
+const token = "007eJxTYLDTnlSom3wytGJbdMvpOu6JIpXpMcKSKvblrfrmOZWLbRQYDAxMUs0tkizNDU2TTcyNjZMMTU0MTS0NkozMDJPNEy2KzT+lNwQyMiRmKjIxMkAgiM/LkJieX5QYn5ZTWlKSWsTAAAD8OB4z";
 const channel = "agora_flutter";
 
 class CallPage extends StatefulWidget {
@@ -104,7 +105,12 @@ class _CallPageState extends State<CallPage> {
 
   void _endCall() {
     chatController.handleCallAction(callId: widget.callId, chatRoomId: widget.roomId, callAction: 'end');
-    Navigator.pop(context);
+    print("the current state before is ${Get.currentRoute}");
+    Get.back();
+    if(Get.currentRoute == "/home"){
+      SystemNavigator.pop();
+    }
+    print("the current state after is ${Get.currentRoute}");
   }
 
   @override
