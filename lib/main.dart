@@ -139,13 +139,14 @@ void main() async {
   runApp(MyApp());
 
   FlutterCallkitIncoming.onEvent.listen((event) async {
+    print("🚀 Deley number event");
+    Get.snackbar("🚀 Deley number e ", "Deley number e");
     switch (event?.event) {
       case Event.actionCallAccept:
         final roomId = event?.body['extra']['roomId'];
         final callId = event?.body['extra']['callId'];
         final callerName = event?.body['extra']['callerName'];
-
-        print("✅ Call accepted: roomId = $roomId, callId = $callId");
+        print("🚀 Deley number Call accepted: roomId = $roomId, callId = $callId");
 
         if (roomId != null && callId != null) {
           _navigateToCallPageWhenReady(roomId, callId);
@@ -159,23 +160,26 @@ void main() async {
         }
         break;
       default:
-        print("Unhandled CallKit event: ${event?.event}");
+        print("🚀 Deley number  ${event?.event}");
     }
   });
-
 }
 
 void _navigateToCallPageWhenReady(String roomId, String callId) async {
   bool navigated = false;
 
   for (int i = 0; i < 30; i++) {
-    await Future.delayed(Duration(milliseconds: 300));
+    print("🚀 Deley number ${i}");
+    await Future.delayed(Duration(milliseconds: 5000));
+    print("🚀 Deley number next ${i}");
     if (Get.context != null) {
-      print("🚀 Navigating to CallPage");
+      print("🚀 Deley number if ${i}");
+      Get.snackbar("🚀 Deley number if ", "Deley number ${i}");
       Get.to(() => CallPage(roomId: roomId, callId: callId));
       navigated = true;
       break;
     } else {
+      print("🚀 Deley number else ${i}");
       print("⏳ Waiting for context to be ready... ($i)");
     }
   }
@@ -184,6 +188,8 @@ void _navigateToCallPageWhenReady(String roomId, String callId) async {
     print("❌ Failed to navigate: context not ready after 3 seconds");
   }
 }
+
+
 
 Future<void> handleCallAction({
   required String callId,
@@ -201,6 +207,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print("🚀 Deley number app oppeinng");
     return GetMaterialApp(
       title: 'Flutter Firebase Auth',
       initialRoute: '/signin',

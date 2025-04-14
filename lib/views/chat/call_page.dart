@@ -7,7 +7,7 @@ import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 const appId = "004e78b9715c4733b1541590b261c7a8";
-const token = "007eJxTYLDTnlSom3wytGJbdMvpOu6JIpXpMcKSKvblrfrmOZWLbRQYDAxMUs0tkizNDU2TTcyNjZMMTU0MTS0NkozMDJPNEy2KzT+lNwQyMiRmKjIxMkAgiM/LkJieX5QYn5ZTWlKSWsTAAAD8OB4z";
+const token = "007eJxTYLjluc7RSFfo17r5jsG/Vc7erjBpPtHQUtnYFX3zuu6NfdkKDAYGJqnmFkmW5oamySbmxsZJhqYmhqaWBklGZobJ5okWYsv/pDcEMjJ8rp/AxMgAgSA+L0Nien5RYnxaTmlJSWoRAwMAxJ0kMw==";
 const channel = "agora_flutter";
 
 class CallPage extends StatefulWidget {
