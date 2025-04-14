@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:doctor_app/bindings/app_bindings.dart';
 import 'package:doctor_app/views/auth/signin_page.dart';
 import 'package:doctor_app/views/auth/signup_page.dart';
@@ -15,7 +16,7 @@ import 'package:flutter_callkit_incoming/flutter_callkit_incoming.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
 
 
 @pragma('vm:entry-point')
@@ -147,11 +148,16 @@ void main() async {
         print("✅ Call accepted: roomId = $roomId, callId = $callId");
 
         if (roomId != null && callId != null) {
-          // Retry navigation after app is fully resumed
           _navigateToCallPageWhenReady(roomId, callId);
         }
         break;
-
+      case Event.actionCallDecline:
+        final roomId = event?.body['extra']['roomId'];
+        final callId = event?.body['extra']['callId'];
+        if (roomId != null && callId != null) {
+          handleCallAction(callId: callId, chatRoomId: roomId);
+        }
+        break;
       default:
         print("Unhandled CallKit event: ${event?.event}");
     }
@@ -162,7 +168,7 @@ void main() async {
 void _navigateToCallPageWhenReady(String roomId, String callId) async {
   bool navigated = false;
 
-  for (int i = 0; i < 10; i++) {
+  for (int i = 0; i < 30; i++) {
     await Future.delayed(Duration(milliseconds: 300));
     if (Get.context != null) {
       print("🚀 Navigating to CallPage");
@@ -179,6 +185,15 @@ void _navigateToCallPageWhenReady(String roomId, String callId) async {
   }
 }
 
+Future<void> handleCallAction({
+  required String callId,
+  required String chatRoomId,
+  String callAction = "decline",
+}) async{
+  await FirebaseFirestore.instance.collection('chats').doc(chatRoomId).collection('calls').doc(callId).update({
+    'callAction': callAction,
+  });
+}
 
 
 class MyApp extends StatelessWidget {
