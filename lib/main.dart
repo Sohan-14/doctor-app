@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:doctor_app/bindings/app_bindings.dart';
 import 'package:doctor_app/views/auth/signin_page.dart';
 import 'package:doctor_app/views/auth/signup_page.dart';
+import 'package:doctor_app/views/chat/audio_call_page.dart';
 import 'package:doctor_app/views/chat/call_page.dart';
 import 'package:doctor_app/views/chat/incoming_call_page.dart';
 import 'package:doctor_app/views/home_page.dart';
@@ -37,6 +38,61 @@ Future<void> _backgroundMessageHandler(RemoteMessage message) async {
         'callId': message.data['callId'],
         'callerId': message.data['recipientId'],
         'callerName': message.data['recipientName'],
+        'callerType': message.data['type'],
+      },
+      missedCallNotification: NotificationParams(
+        showNotification: true,
+        isShowCallback: true,
+        subtitle: 'Missed call',
+        callbackText: 'Call back',
+      ),
+      android: const AndroidParams(
+          isCustomNotification: false,
+          isShowLogo: false,
+          ringtonePath: 'system_ringtone_default',
+          backgroundColor: '#0955fa',
+          actionColor: '#4CAF50',
+          isImportant: true,
+          textColor: '#ffffff',
+          isShowFullLockedScreen: true,
+          incomingCallNotificationChannelName: "Incoming Call",
+          missedCallNotificationChannelName: "Missed Call",
+          isShowCallID: false
+      ),
+      ios: IOSParams(
+        iconName: 'CallKitLogo',
+        handleType: 'generic',
+        supportsVideo: true,
+        maximumCallGroups: 2,
+        maximumCallsPerCallGroup: 1,
+        audioSessionMode: 'default',
+        audioSessionActive: true,
+        audioSessionPreferredSampleRate: 44100.0,
+        audioSessionPreferredIOBufferDuration: 0.005,
+        supportsDTMF: true,
+        supportsHolding: true,
+        supportsGrouping: false,
+        supportsUngrouping: false,
+        ringtonePath: 'system_ringtone_default',
+      ),
+    ));
+  }
+  else if (message.data['type'] == 'audio_call') {
+    await FlutterCallkitIncoming.showCallkitIncoming(CallKitParams(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      nameCaller: message.data['recipientName'],
+      appName: 'Doctor App',
+      handle: 'Voice Call',
+      type: 1, // 1 = audio, 2 = video
+      duration: 30000,
+      textAccept: 'Accept',
+      textDecline: 'Decline',
+      extra: {
+        'roomId': message.data['roomId'],
+        'callId': message.data['callId'],
+        'callerId': message.data['recipientId'],
+        'callerName': message.data['recipientName'],
+        'callerType': message.data['type'],
       },
       missedCallNotification: NotificationParams(
         showNotification: true,
@@ -111,6 +167,16 @@ void main() async {
         "callerName": message.data['recipientName'],
         "roomId": message.data['roomId'],
         "callId": message.data['callId'],
+        "callType": message.data['type'],
+      });
+    }
+    else if (message.data['type'] == 'audio_call') {
+      print("callId : ${message.data['callId']}");
+      Get.to(() => IncomingCallPage(), arguments: {
+        "callerName": message.data['recipientName'],
+        "roomId": message.data['roomId'],
+        "callId": message.data['callId'],
+        "callType": message.data['type'],
       });
     }
     else{
@@ -146,10 +212,11 @@ void main() async {
         final roomId = event?.body['extra']['roomId'];
         final callId = event?.body['extra']['callId'];
         final callerName = event?.body['extra']['callerName'];
+        final callerType = event?.body['extra']['callerType'];
         print("🚀 Deley number Call accepted: roomId = $roomId, callId = $callId");
 
         if (roomId != null && callId != null) {
-          _navigateToCallPageWhenReady(roomId, callId);
+          _navigateToCallPageWhenReady(roomId, callId, callerType);
         }
         break;
       case Event.actionCallDecline:
@@ -165,7 +232,7 @@ void main() async {
   });
 }
 
-void _navigateToCallPageWhenReady(String roomId, String callId) async {
+void _navigateToCallPageWhenReady(String roomId, String callId, String callerType) async {
   bool navigated = false;
 
   for (int i = 0; i < 30; i++) {
@@ -175,7 +242,12 @@ void _navigateToCallPageWhenReady(String roomId, String callId) async {
     if (Get.context != null) {
       print("🚀 Deley number if ${i}");
       Get.snackbar("🚀 Deley number if ", "Deley number ${i}");
-      Get.to(() => CallPage(roomId: roomId, callId: callId));
+      if(callerType == "call"){
+        Get.to(() => CallPage(roomId: roomId, callId: callId));
+      }
+      else if(callerType == "audio_call"){
+        Get.to(() => AudioCallPage(roomId: roomId, callId: callId));
+      }
       navigated = true;
       break;
     } else {

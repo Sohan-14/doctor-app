@@ -40,6 +40,14 @@ class _ChatScreenState extends State<ChatScreen> {
         actions: [
           IconButton(
             onPressed: (){
+              chatController.sendAudioCall(widget.recipientToken);
+            },
+            icon: Icon(Icons.call, size: 32,),
+          ),
+          SizedBox(width: 12,),
+
+          IconButton(
+            onPressed: (){
               chatController.sendCall(widget.recipientToken);
             },
             icon: Icon(Icons.video_call, size: 32,),

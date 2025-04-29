@@ -1,5 +1,6 @@
 // import 'package:assets_audio_player/assets_audio_player.dart';
 import 'package:doctor_app/controllers/chat_controller.dart';
+import 'package:doctor_app/views/chat/audio_call_page.dart';
 import 'package:doctor_app/views/chat/call_page.dart' show CallPage;
 import 'package:flutter/material.dart';
 import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
@@ -72,7 +73,12 @@ class _IncomingCallPageState extends State<IncomingCallPage> {
                   onPressed: () {
                     chatController.handleCallAction(callId: args['callId'], chatRoomId: args['roomId'], callAction: 'accept');
                     _stopRingtone();
-                    Get.to(CallPage(roomId: args['roomId'], callId: args['callId'],));
+                    if(args["callType"] == "call"){
+                      Get.to(CallPage(roomId: args['roomId'], callId: args['callId'],));
+                    }
+                    else if(args["callType"] == "audio_call"){
+                      Get.to(AudioCallPage(roomId: args['roomId'], callId: args['callId'],));
+                    }
 
                   },
                 ),

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:doctor_app/utils/push_notification.dart';
+import 'package:doctor_app/views/chat/audio_call_page.dart';
 import 'package:doctor_app/views/chat/call_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
@@ -119,6 +120,44 @@ class ChatController extends GetxController {
 
     Get.to(
       CallPage(
+        roomId: chatRoomId,
+        callId: docRef.id,
+      ),
+    );
+  }
+
+  Future<void> sendAudioCall(String recipientToken) async {
+    final docRef = _firestore
+        .collection('chats')
+        .doc(chatRoomId)
+        .collection('calls')
+        .doc();
+
+    await docRef.set({
+      'callId': docRef.id,
+      'senderId': _currentUser.uid,
+      'recipientId': _recipientId,
+      'callAction': "calling",
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+
+    print("callId : callId : ${docRef.id}");
+
+    PushNotification.sendNotification(
+        recipientToken: recipientToken,
+        message: "Call from $_recipientName",
+        roomId: chatRoomId,
+        callId: docRef.id,
+        title: _recipientName,
+        recipientId: _recipientId,
+        recipientName: _recipientName,
+        type: "audio_call"
+    );
+
+    messageController.clear();
+
+    Get.to(
+      AudioCallPage(
         roomId: chatRoomId,
         callId: docRef.id,
       ),
